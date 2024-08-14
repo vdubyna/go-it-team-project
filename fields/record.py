@@ -9,12 +9,14 @@ class Record:
     def __init__(self, name: str) -> None:
         self.name = Name(name)
         self.phones: list[Phone] = []
+        self.emails: list = []  # TODO: implement Email class with the validation + adding the email
         self.birthday = None
 
     def __str__(self) -> str:
         return f"Contact name: {self.name.value} || phones: {'; '.join(p.value for p in self.phones)} || birthday: {self.birthday}"
 
     def add_birthday(self, birthday):
+        """Add a birthday to the record."""
         self.birthday = Birthday(birthday)
 
     def add_phone(self, number: str) -> None:
@@ -27,11 +29,16 @@ class Record:
 
     def edit_phone(self, old_number: str, new_number: str) -> None:
         """Edit a phone number in the record."""
+        found = False
+
         for phone in self.phones:
             if phone.value == old_number:
                 phone.value = new_number
+                found = True
                 break
-        return None
+
+        if not found:
+            raise ValueError("The specified number does not exist or there are no phone numbers for the contact.")
 
     def find_phone(self, number: str) -> Phone | None:
         """Find a phone number in the record."""
@@ -39,3 +46,14 @@ class Record:
             if phone.value == number:
                 return phone
         return None
+
+    def change_name(self, new_name: str) -> None:
+        self.name = Name(new_name)
+
+    def edit_email(self, old_email: str, new_email: str) -> None:
+        for email in self.emails:
+            if email.value == old_email:
+                email.value = new_email
+                return
+
+        raise ValueError(f"Email '{old_email}' not found in contact.")

@@ -3,7 +3,7 @@ from fields.address_book import AddressBook
 from fields.record import Record
 from InquirerPy import inquirer
 from colorama import init, Fore, Back, Style
-
+from fields.validators import validate_name, validate_phone, validate_email, validate_address, validate_birthday
 from decorators import input_error
 
 init(autoreset=True)
@@ -15,32 +15,6 @@ def parse_input(user_input: str) -> tuple:
     cmd = cmd.strip().lower()
     return cmd, *args
 
-
-@input_error
-def add_contact(args: list, book: AddressBook) -> str:
-    """Add a new contact to the address book."""
-    name, phone, *_ = args
-    record = book.find(name)
-    message = "Contact updated."
-    if record is None:
-        record = Record(name)
-        book.add_record(record)
-        message = "Contact added."
-    if phone:
-        record.add_phone(phone)
-    return message
-
-
-@input_error
-def change_contact(args: list, book: AddressBook) -> str:
-    """Update an existing contact in the address book."""
-    name, old_phone, new_phone = args
-    record = book.find(name)
-    if record is None:
-        return f"The record with name '{name}' is not found."
-
-    record.edit_phone(old_phone, new_phone)
-    return "Contact updated."
 
 
 @input_error
@@ -115,25 +89,136 @@ def search_contacts(query: str, book: AddressBook) -> str:
     query_lower = query.lower()
 
     for record in book.data.values():
+        found = False
+
         # Check name
         if query_lower in str(record.name).lower():
             results.append(str(record))
-            continue
+            found = True
 
         # Check phones
-        for phone in record.phones:
-            if query_lower in phone.value:
-                results.append(str(record))
-                break
+        if not found:
+            for phone in record.phones:
+                if query_lower in phone.value:
+                    results.append(str(record))
+                    found = True
+                    break
+
+        # Check email
+        if not found and record.email and query_lower in str(record.email.value):
+            results.append(str(record))
+            found = True
+
+        # Check address
+        if not found and record.address and query_lower in str(record.address.value):
+            results.append(str(record))
+            found = True
 
         # Check birthday
-        if record.birthday and query_lower in str(record.birthday.value):
+        if not found and record.birthday and query_lower in str(record.birthday.value):
             results.append(str(record))
-            continue
+            found = True
 
     if results:
         return "\n".join(results)
     return "No matching contacts found."
+
+
+@input_error
+def add_contact_interactive(book: AddressBook) -> str:
+    """Interactively add a new contact to the address book."""
+
+    # Input name with validation
+    while True:
+        name = input(Fore.LIGHTYELLOW_EX+ "Name: " + Fore.RESET)
+        if validate_name(name):
+            break
+        print(Fore.LIGHTRED_EX + "Invalid name. Please use only letters.")
+
+    # Input phone with validation
+    while True:
+        phone = input(Fore.LIGHTYELLOW_EX + "Phone: " + Fore.RESET)
+        if validate_phone(phone):
+            break
+        print(Fore.LIGHTRED_EX + "Invalid phone number. Please enter a valid number (at least 10 digits).")
+
+    # Input email with validation
+    while True:
+        email = input(Fore.LIGHTYELLOW_EX + "Email: " + Fore.RESET)
+        if validate_email(email):
+            break
+        print(Fore.LIGHTRED_EX + "Invalid email address. Please enter a valid email.")
+
+    # Input address with validation
+    while True:
+        address = input(Fore.LIGHTYELLOW_EX + "Address: " + Fore.RESET)
+        if validate_address(address):
+            break
+        print(Fore.LIGHTRED_EX + "Invalid address. Please enter a valid address.")
+
+    # Input birthday with validation
+    while True:
+        birthday = input(Fore.LIGHTYELLOW_EX + "Birthday (DD.MM.YYYY): " + Fore.RESET)
+        if validate_birthday(birthday):
+            break
+        print(Fore.LIGHTRED_EX + "Invalid birthday. Please enter in format DD.MM.YYYY")
+
+    # Create a new record
+    record = book.find(name)
+    message = "Contact updated."
+    if record is None:
+        record = Record(name)
+        book.add_record(record)
+        message = "Contact added."
+
+    record.add_phone(phone)
+    record.add_email(email)
+    record.add_address(address)
+    record.add_birthday(birthday)
+
+    return message
+
+
+def edit_contact(book: AddressBook) -> str:
+    """Edit an existing contact by updating its fields."""
+
+    name = input("Enter the name of the contact you want to edit: ")
+
+    # Find the record by name
+    record = book.find(name)
+    if record is None:
+        return f"Contact with the name '{name}' not found."
+
+    # Choose the field to edit
+    field_to_edit = inquirer.select(
+        message="Which field would you like to edit?",
+        choices=["Phone", "Email", "Address", "Birthday", "Cancel"]
+    ).execute()
+
+    if field_to_edit == "Cancel":
+        return "Edit operation cancelled."
+
+    # Run the appropriate function to edit the field
+    if field_to_edit == "Phone":
+        old_phone = input(Fore.LIGHTMAGENTA_EX + "Enter the old phone number: " + Fore.RESET)
+        new_phone = input(Fore.LIGHTCYAN_EX + "Enter the new phone number: " + Fore.RESET)
+        record.edit_phone(old_phone, new_phone)
+        return "Phone number updated successfully."
+
+    elif field_to_edit == "Email":
+        new_email = input(Fore.LIGHTCYAN_EX + "Enter the new email address: " + Fore.RESET)
+        record.edit_email(new_email)
+        return "Email address updated successfully."
+
+    elif field_to_edit == "Address":
+        new_address = input(Fore.LIGHTCYAN_EX +  "Enter the new address: " + Fore.RESET)
+        record.edit_address(new_address)
+        return "Address updated successfully."
+
+    elif field_to_edit == "Birthday":
+        new_birthday = input(Fore.LIGHTCYAN_EX + "Enter the new birthday (YYYY-MM-DD): " + Fore.RESET)
+        record.add_birthday(new_birthday)
+        return "Birthday updated successfully."
 
 
 
@@ -167,11 +252,9 @@ def main() -> None:
         elif choice == "Hello":
             print("How can I help you?")
         elif choice == "Add contact":
-            args = input("Enter contact details: ").split()
-            print(add_contact(args, contacts))
+            print(add_contact_interactive(contacts))
         elif choice == "Change contact":
-            args = input("Enter contact name and new details: ").split()
-            print(change_contact(args, contacts))
+            print(edit_contact(contacts))
         elif choice == "Show phone number":
             args = input("Enter contact name: ").split()
             print(show_phone(args, contacts))

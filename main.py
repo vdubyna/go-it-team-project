@@ -85,6 +85,20 @@ def show_phone(args: list, book: AddressBook) -> str:
     return str(record)
 
 
+@input_error
+def delete_contact(args, book: AddressBook):
+    if len(args) != 1:
+        return "Invalid number of arguments. Usage: delete-contact [name]"
+
+    name = args[0]
+    record = book.find(name)
+    if record:
+        book.delete(name)
+        return f"Contact '{name}' successfully deleted"
+
+    return f"No contact with the name '{name}' exists"
+
+
 def show_all_contacts(book: AddressBook) -> str:
     """Show all contacts."""
     if not book:
@@ -161,6 +175,8 @@ def main() -> None:
             print(add_contact(args, contacts))
         elif command == "change-contact":
             print(change_contact(args, contacts))
+        elif command == "delete-contact":
+            print(delete_contact(args, contacts))
         elif command == "phone":
             print(show_phone(args, contacts))
         elif command == "all":

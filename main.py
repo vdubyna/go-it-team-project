@@ -108,6 +108,34 @@ def load_data(filename: str = "var/addressbook.pkl") -> AddressBook:
     except FileNotFoundError:
         return AddressBook()
 
+@input_error
+def search_contacts(query: str, book: AddressBook) -> str:
+    """Search for contacts by any field."""
+    results = []
+    query_lower = query.lower()
+
+    for record in book.data.values():
+        # Check name
+        if query_lower in str(record.name).lower():
+            results.append(str(record))
+            continue
+
+        # Check phones
+        for phone in record.phones:
+            if query_lower in phone.value:
+                results.append(str(record))
+                break
+
+        # Check birthday
+        if record.birthday and query_lower in str(record.birthday.value):
+            results.append(str(record))
+            continue
+
+    if results:
+        return "\n".join(results)
+    return "No matching contacts found."
+
+
 
 def main() -> None:
     """Main function to handle user input and commands."""
@@ -127,6 +155,7 @@ def main() -> None:
                 "Add birthday",
                 "Show birthday",
                 "Show upcoming birthdays",
+                "Search contacts",
                 "Exit",
             ],
         ).execute()
@@ -157,6 +186,9 @@ def main() -> None:
         elif choice == "Show upcoming birthdays":
             args = input("Enter number of days to check: ").split()
             print(birthdays(args, contacts))
+        elif choice == "Search contacts":
+            query = input("Enter search query: ")
+            print(search_contacts(query, contacts))
         print()
 
 if __name__ == "__main__":

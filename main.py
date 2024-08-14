@@ -1,9 +1,12 @@
 import pickle
 from fields.address_book import AddressBook
 from fields.record import Record
+from InquirerPy import inquirer
+from colorama import init, Fore, Back, Style
 
 from decorators import input_error
 
+init(autoreset=True)
 
 @input_error
 def parse_input(user_input: str) -> tuple:
@@ -108,39 +111,53 @@ def load_data(filename: str = "var/addressbook.pkl") -> AddressBook:
 
 def main() -> None:
     """Main function to handle user input and commands."""
-
-    print("Welcome to the assistant bot!")
+    print(Fore.GREEN + "Welcome to the assistant bot!")
     address_book_file = "var/addressbook.pkl"
     contacts = load_data(address_book_file)
 
     while True:
-        user_input = input("Enter a command: ")
-        command, *args = parse_input(user_input)
+        choice = inquirer.select(
+            message= "Choose an option:",
+            choices=[
+                "Hello",
+                "Add contact",
+                "Change contact",
+                "Show phone number",
+                "Show all contacts",
+                "Add birthday",
+                "Show birthday",
+                "Show upcoming birthdays",
+                "Exit",
+            ],
+        ).execute()
 
-        if command in {"close", "exit"}:
+        if choice == "Exit":
             save_data(contacts, address_book_file)
             print("Good bye!")
             break
-        elif command == "hello":
+        elif choice == "Hello":
             print("How can I help you?")
-        elif command == "add":
+        elif choice == "Add contact":
+            args = input("Enter contact details: ").split()
             print(add_contact(args, contacts))
-        elif command == "change":
+        elif choice == "Change contact":
+            args = input("Enter contact name and new details: ").split()
             print(change_contact(args, contacts))
-        elif command == "phone":
+        elif choice == "Show phone number":
+            args = input("Enter contact name: ").split()
             print(show_phone(args, contacts))
-        elif command == "all":
+        elif choice == "Show all contacts":
             print(show_all_contacts(contacts))
-        elif command == "add-birthday":
+        elif choice == "Add birthday":
+            args = input("Enter contact name and birthday: ").split()
             print(add_birthday(args, contacts))
-        elif command == "show-birthday":
+        elif choice == "Show birthday":
+            args = input("Enter contact name: ").split()
             print(show_birthday(args, contacts))
-        elif command == "birthdays":
+        elif choice == "Show upcoming birthdays":
+            args = input("Enter number of days to check: ").split()
             print(birthdays(args, contacts))
-        else:
-            print("Invalid command.")
         print()
-
 
 if __name__ == "__main__":
     main()

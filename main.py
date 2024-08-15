@@ -168,21 +168,23 @@ def show_all_notes(notes: Notes) -> str:
     return notes.show_all()
 
 
-def save_data(book: AddressBook, filename: str = "var/addressbook.pkl") -> None:
+def save_data(book: AddressBook, notes: Notes, filename: str = "var/addressbook.pkl") -> None:
     """Save data to a file using pickle serialization."""
 
     with open(filename, "wb") as file:
-        pickle.dump(book, file)
+        data = {"address_book": book, "notes": notes}
+        pickle.dump(data, file)
 
 
-def load_data(filename: str = "var/addressbook.pkl") -> AddressBook:
+def load_data(filename: str = "var/addressbook.pkl") -> (AddressBook, Notes):
     """Load data from a file using pickle deserialization."""
 
     try:
         with open(filename, "rb") as file:
-            return pickle.load(file)
+            data = pickle.load(file)
+            return data.get("address_book", AddressBook()), data.get("notes", Notes())
     except FileNotFoundError:
-        return AddressBook()
+        return AddressBook(), Notes()
 
 
 @input_error
@@ -233,7 +235,7 @@ def add_contact_interactive(book: AddressBook) -> str:
 
     # Input name with validation
     while True:
-        name = input(Fore.LIGHTYELLOW_EX+ "Name: " + Fore.RESET)
+        name = input(Fore.LIGHTYELLOW_EX + "Name: " + Fore.RESET)
         if validate_name(name):
             break
         print(Fore.LIGHTRED_EX + "Invalid name. Please use only letters.")
@@ -314,7 +316,7 @@ def edit_contact(book: AddressBook) -> str:
         return "Email address updated successfully."
 
     elif field_to_edit == "Address":
-        new_address = input(Fore.LIGHTCYAN_EX +  "Enter the new address: " + Fore.RESET)
+        new_address = input(Fore.LIGHTCYAN_EX + "Enter the new address: " + Fore.RESET)
         record.edit_address(new_address)
         return "Address updated successfully."
 
@@ -328,12 +330,10 @@ def main() -> None:
     """Main function to handle user input and commands."""
     print(Fore.GREEN + "Welcome to the assistant bot!")
     address_book_file = "var/addressbook.pkl"
-    contacts = load_data(address_book_file)
-    notes = Notes()
-
+    contacts, notes = load_data(address_book_file)
     while True:
         choice = inquirer.select(
-            message= "Choose an option:",
+            message="Choose an option:",
             choices=[
                 "Add contact",
                 "Change contact",
@@ -354,7 +354,7 @@ def main() -> None:
         ).execute()
 
         if choice == "Exit":
-            save_data(contacts, address_book_file)
+            save_data(contacts, notes, address_book_file)
             print("Good bye!")
             break
         elif choice == "Add contact":

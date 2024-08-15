@@ -17,21 +17,6 @@ def parse_input(user_input: str) -> tuple:
 
 
 @input_error
-def add_contact(args: list, book: AddressBook) -> str:
-    """Add a new contact to the address book."""
-    name, phone, *_ = args
-    record = book.find(name)
-    message = "Contact updated."
-    if record is None:
-        record = Record(name)
-        book.add_record(record)
-        message = "Contact added."
-    if phone:
-        record.add_phone(phone)
-    return message
-
-
-@input_error
 def change_contact(args: list, book: AddressBook) -> str:
     """Update an existing contact in the address book."""
     if len(args) != 4:
@@ -333,7 +318,6 @@ def main() -> None:
             print(edit_contact(contacts))
         elif choice == "Show phone number":
             args = input("Enter contact name: ").split()
-            print(add_contact(args, contacts))
             print(change_contact(args, contacts))
         elif choice == "Delete contact":
             args = input("Enter contact name to delete: ").split()

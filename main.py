@@ -20,52 +20,6 @@ def parse_input(user_input: str) -> tuple:
 
 
 @input_error
-def change_contact(args: list, book: AddressBook) -> str:
-    """Update an existing contact in the address book."""
-    if len(args) != 4:
-        return "Invalid arguments. Usage: change-contact [name] [field] [old_value] [new_value]"
-
-    name, field, old_value, new_value = args
-    record = book.find(name)
-    if record is None:
-        return f"The record with name '{name}' is not found."
-
-    field = field.lower()
-
-    # Check if the given field is in the supported values
-    if field not in {'name', 'email', 'phone', 'birthday'}:
-        return f"Field '{field}' is not supported. Use 'name', 'email', 'phone' or 'birthday'."
-
-    if field == "name":
-        # Change the name of the record itself and the key in the contacts
-        try:
-            record.change_name(new_value)
-            book.change_name(old_value, new_value)
-        except KeyError as e:
-            return str(e)
-
-    elif field == "email":
-        try:
-            record.edit_email(old_value, new_value)
-        except ValueError as e:
-            return str(e)
-
-    elif field == "phone":
-        try:
-            record.edit_phone(old_value, new_value)
-        except ValueError as e:
-            return str(e)
-
-    elif field == "birthday":
-        try:
-            record.add_birthday(new_value)
-        except ValueError as e:
-            return str(e)
-
-    return f"{field.capitalize()} changed!"
-
-
-@input_error
 def show_phone(args: list, book: AddressBook) -> str:
     """Show the phone number for the contact."""
     name = args[0]
@@ -197,7 +151,6 @@ def load_data(filename: str = "var/addressbook.pkl") -> (AddressBook, Notes):
         return AddressBook(), Notes()
 
 
-
 @input_error
 def search_contacts(query: str, book: AddressBook) -> str:
     """Search for contacts by any field."""
@@ -324,9 +277,9 @@ def edit_contact(book: AddressBook) -> str:
         if field_to_edit == "Back":
             return "Edit operation cancelled."
 
-        if phone_to_remove_edit == 'New':
+        if phone_to_remove_edit == "New":
             new_phone = input(Fore.LIGHTCYAN_EX + "Enter phone number to add: " + Fore.RESET)
-        elif phone_to_remove_edit == 'Back':
+        elif phone_to_remove_edit == "Back":
             return "Edit operation cancelled."
         else:
             new_phone = input(Fore.LIGHTCYAN_EX + "Enter the new phone or 'r' to remove: " + Fore.RESET)
@@ -337,7 +290,7 @@ def edit_contact(book: AddressBook) -> str:
             record.remove_phone(phone_to_remove_edit)
             return "Phone number removed successfully."
 
-        if phone_to_remove_edit == 'New':
+        if phone_to_remove_edit == "New":
             record.add_phone(new_phone)
             return "Phone number added successfully."
         else:

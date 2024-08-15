@@ -11,9 +11,9 @@ class Record:
     def __init__(self, name: str) -> None:
         self.name = Name(name)
         self.phones: list[Phone] = []
-        self.address: Address|None = None
-        self.email: Email|None = None
-        self.birthday: str|None = None
+        self.address: Address | None = None
+        self.email: Email | None = None
+        self.birthday: str | None = None
 
     def __str__(self) -> str:
         return f"Contact name: {self.name.value} || phones: {'; '.join(p.value for p in self.phones)} || birthday: {self.birthday} || email: {self.email} || address: {self.address}"

@@ -291,7 +291,6 @@ def main() -> None:
         choice = inquirer.select(
             message= "Choose an option:",
             choices=[
-                "Hello",
                 "Add contact",
                 "Change contact",
                 "Delete contact",
@@ -310,8 +309,6 @@ def main() -> None:
             save_data(contacts, address_book_file)
             print("Good bye!")
             break
-        elif choice == "Hello":
-            print("How can I help you?")
         elif choice == "Add contact":
             print(add_contact_interactive(contacts))
         elif choice == "Change contact":

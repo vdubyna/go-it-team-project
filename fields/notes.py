@@ -34,3 +34,24 @@ class Note:
         # Return title + content if the content is present or just title otherwise
         return f"{title_str}\n{content_str}" if content_str else title_str
 
+
+class Notes:
+    def __init__(self) -> None:
+        self.notes: list = []
+
+    def find_note(self, title: str) -> str | None:
+        if not title:
+            raise ValueError("Title is required")
+
+        for note in self.notes:
+            if note.title.value == title:
+                return note
+        return None
+
+    def add_note(self, title: str, text=None) -> str:
+        if self.find_note(title):
+            raise ValueError(f"Note with title as '{title}' exists already.")
+
+        note = Note(title, text)
+        self.notes.append(note)
+        return f"Note with title: '{title}' added."

@@ -8,6 +8,7 @@ from decorators import input_error
 
 init(autoreset=True)
 
+
 @input_error
 def parse_input(user_input: str) -> tuple:
     """Parse user input into command and arguments."""
@@ -130,6 +131,7 @@ def load_data(filename: str = "var/addressbook.pkl") -> AddressBook:
     except FileNotFoundError:
         return AddressBook()
 
+
 @input_error
 def search_contacts(query: str, book: AddressBook) -> str:
     """Search for contacts by any field."""
@@ -178,7 +180,7 @@ def add_contact_interactive(book: AddressBook) -> str:
 
     # Input name with validation
     while True:
-        name = input(Fore.LIGHTYELLOW_EX+ "Name: " + Fore.RESET)
+        name = input(Fore.LIGHTYELLOW_EX + "Name: " + Fore.RESET)
         if validate_name(name):
             break
         print(Fore.LIGHTRED_EX + "Invalid name. Please use only letters.")
@@ -240,18 +242,41 @@ def edit_contact(book: AddressBook) -> str:
     # Choose the field to edit
     field_to_edit = inquirer.select(
         message="Which field would you like to edit?",
-        choices=["Phone", "Email", "Address", "Birthday", "Cancel"]
+        choices=["Phones", "Email", "Address", "Birthday", "Cancel"]
     ).execute()
 
     if field_to_edit == "Cancel":
         return "Edit operation cancelled."
 
     # Run the appropriate function to edit the field
-    if field_to_edit == "Phone":
-        old_phone = input(Fore.LIGHTMAGENTA_EX + "Enter the old phone number: " + Fore.RESET)
-        new_phone = input(Fore.LIGHTCYAN_EX + "Enter the new phone number: " + Fore.RESET)
-        record.edit_phone(old_phone, new_phone)
-        return "Phone number updated successfully."
+    if field_to_edit == "Phones":
+        phone_to_remove_edit = inquirer.select(
+            message="Which phone would you like to edit/remove?",
+            choices=['New'] + record.phones + ['Back']
+        ).execute()
+
+        if field_to_edit == "Back":
+            return "Edit operation cancelled."
+
+        if phone_to_remove_edit == 'New':
+            new_phone = input(Fore.LIGHTCYAN_EX + "Enter phone number to add: " + Fore.RESET)
+        elif phone_to_remove_edit == 'Back':
+            return "Edit operation cancelled."
+        else:
+            new_phone = input(Fore.LIGHTCYAN_EX + "Enter the new phone or 'r' to remove: " + Fore.RESET)
+
+        if new_phone is None:
+            return "Edit operation cancelled."
+        if new_phone == "r":
+            record.remove_phone(phone_to_remove_edit)
+            return "Phone number removed successfully."
+
+        if phone_to_remove_edit == 'New':
+            record.add_phone(new_phone)
+            return "Phone number added successfully."
+        else:
+            record.edit_phone(phone_to_remove_edit, new_phone)
+            return "Phone number updated successfully."
 
     elif field_to_edit == "Email":
         new_email = input(Fore.LIGHTCYAN_EX + "Enter the new email address: " + Fore.RESET)
@@ -259,7 +284,7 @@ def edit_contact(book: AddressBook) -> str:
         return "Email address updated successfully."
 
     elif field_to_edit == "Address":
-        new_address = input(Fore.LIGHTCYAN_EX +  "Enter the new address: " + Fore.RESET)
+        new_address = input(Fore.LIGHTCYAN_EX + "Enter the new address: " + Fore.RESET)
         record.edit_address(new_address)
         return "Address updated successfully."
 
@@ -267,7 +292,6 @@ def edit_contact(book: AddressBook) -> str:
         new_birthday = input(Fore.LIGHTCYAN_EX + "Enter the new birthday (YYYY-MM-DD): " + Fore.RESET)
         record.add_birthday(new_birthday)
         return "Birthday updated successfully."
-
 
 
 def main() -> None:
@@ -278,13 +302,11 @@ def main() -> None:
 
     while True:
         choice = inquirer.select(
-            message= "Choose an option:",
+            message="Choose an option:",
             choices=[
                 "Add contact",
                 "Change contact",
                 "Delete contact",
-                "Delete phone",
-                "Show phone number",
                 "Show all contacts",
                 "Show birthday",
                 "Show upcoming birthdays",
@@ -301,15 +323,9 @@ def main() -> None:
             print(add_contact_interactive(contacts))
         elif choice == "Change contact":
             print(edit_contact(contacts))
-        elif choice == "Show phone number":
-            args = input("Enter contact name: ").split()
-            print(change_contact(args, contacts))
         elif choice == "Delete contact":
             args = input("Enter contact name to delete: ").split()
             print(delete_contact(args, contacts))
-        elif choice == "Delete phone":
-            args = input("Enter phone to delete: ").split()
-            print(show_phone(args, contacts))
         elif choice == "Show all contacts":
             print(show_all_contacts(contacts))
         elif choice == "Show birthday":

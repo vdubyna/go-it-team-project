@@ -2,8 +2,9 @@ import pickle
 from fields.address_book import AddressBook
 from fields.record import Record
 from InquirerPy import inquirer
-from colorama import init, Fore, Back, Style
+from colorama import init, Fore
 from fields.validators import validate_name, validate_phone, validate_email, validate_address, validate_birthday
+from fields.notes import Note, Notes
 from decorators import input_error
 from tabulate import tabulate
 
@@ -125,21 +126,76 @@ def birthdays(args, book: AddressBook):
     return book.get_upcoming_birthdays()
 
 
-def save_data(book: AddressBook, filename: str = "var/addressbook.pkl") -> None:
+@input_error
+def add_note(notes: Notes, title: str) -> str:
+    """Add a new note to notes."""
+    if notes.find_note(title):
+        return f"Note with title '{title}' already exists."
+
+    text = input("Enter a text: ")
+    try:
+        message = notes.add_note(title, text)
+        return message
+    except ValueError as e:
+        return str(e)
+
+
+@input_error
+def change_note(notes: Notes, title: str) -> str:
+    """Change the existing note by its title."""
+    if not (note := notes.find_note(title)):
+        return f"Note with title: '{title}' is not found."
+
+    new_content = input("Enter new content: ")
+    if new_content:
+        note.content = new_content
+
+    return f"Note with title '{title}' successfully edited."
+
+
+@input_error
+def delete_note(notes: Notes, title: str) -> str:
+    """Delete the existing note by its title."""
+    if not notes.find_note(title):
+        return f"Note with title: '{title}' is not found."
+
+    message = notes.delete_note(title)
+    return message
+
+
+@input_error
+def find_note(notes: Notes, title: str) -> str | Note:
+    """Find the existing note by its title."""
+    if not (note := notes.find_note(title)):
+        return f"Note with title: '{title}' is not found."
+
+    return note
+
+
+@input_error
+def show_all_notes(notes: Notes) -> str:
+    """Show all existing notes."""
+    return notes.show_all()
+
+
+def save_data(book: AddressBook, notes: Notes, filename: str = "var/addressbook.pkl") -> None:
     """Save data to a file using pickle serialization."""
 
     with open(filename, "wb") as file:
-        pickle.dump(book, file)
+        data = {"address_book": book, "notes": notes}
+        pickle.dump(data, file)
 
 
-def load_data(filename: str = "var/addressbook.pkl") -> AddressBook:
+def load_data(filename: str = "var/addressbook.pkl") -> (AddressBook, Notes):
     """Load data from a file using pickle deserialization."""
 
     try:
         with open(filename, "rb") as file:
-            return pickle.load(file)
+            data = pickle.load(file)
+            return data.get("address_book", AddressBook()), data.get("notes", Notes())
     except FileNotFoundError:
-        return AddressBook()
+        return AddressBook(), Notes()
+
 
 
 @input_error
@@ -304,13 +360,11 @@ def edit_contact(book: AddressBook) -> str:
         return record.get_info_with_title("Birthday updated successfully.")
 
 
-
 def main() -> None:
     """Main function to handle user input and commands."""
     print(Fore.GREEN + "Welcome to the assistant bot!")
     address_book_file = "var/addressbook.pkl"
-    contacts = load_data(address_book_file)
-
+    contacts, notes = load_data(address_book_file)
     while True:
         choice = inquirer.select(
             message="Choose an option:",
@@ -322,12 +376,17 @@ def main() -> None:
                 "Show birthday",
                 "Show upcoming birthdays",
                 "Search contacts",
+                "Add note",
+                "Change note",
+                "Delete note",
+                "Find note",
+                "Show all notes",
                 "Exit",
             ],
         ).execute()
 
         if choice == "Exit":
-            save_data(contacts, address_book_file)
+            save_data(contacts, notes, address_book_file)
             print("Good bye!")
             break
         elif choice == "Add contact":
@@ -348,6 +407,20 @@ def main() -> None:
         elif choice == "Search contacts":
             query = input("Enter search query: ")
             print(search_contacts(query, contacts))
+        elif choice == "Add note":
+            title = input("Enter a title: ")
+            print(add_note(notes, title))
+        elif choice == "Change note":
+            title = input("Enter a title: ")
+            print(change_note(notes, title))
+        elif choice == "Delete note":
+            title = input("Enter a title: ")
+            print(delete_note(notes, title))
+        elif choice == "Find note":
+            title = input("Enter the title to search for: ")
+            print(find_note(notes, title))
+        elif choice == "Show all notes":
+            print(show_all_notes(notes))
         print()
 
 

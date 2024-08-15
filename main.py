@@ -242,7 +242,7 @@ def edit_contact(book: AddressBook) -> str:
     # Choose the field to edit
     field_to_edit = inquirer.select(
         message="Which field would you like to edit?",
-        choices=["Phones", "Email", "Address", "Birthday", "Cancel"]
+        choices=["Phone", "Email", "Address", "Birthday", "Cancel"]
     ).execute()
 
     if field_to_edit == "Cancel":
@@ -281,17 +281,18 @@ def edit_contact(book: AddressBook) -> str:
     elif field_to_edit == "Email":
         new_email = input(Fore.LIGHTCYAN_EX + "Enter the new email address: " + Fore.RESET)
         record.edit_email(new_email)
-        return "Email address updated successfully."
+        return record.get_info_with_title("Email address updated successfully.")
 
     elif field_to_edit == "Address":
         new_address = input(Fore.LIGHTCYAN_EX + "Enter the new address: " + Fore.RESET)
         record.edit_address(new_address)
-        return "Address updated successfully."
+        return record.get_info_with_title("Address updated successfully.")
 
     elif field_to_edit == "Birthday":
         new_birthday = input(Fore.LIGHTCYAN_EX + "Enter the new birthday (YYYY-MM-DD): " + Fore.RESET)
         record.add_birthday(new_birthday)
-        return "Birthday updated successfully."
+        return record.get_info_with_title("Birthday updated successfully.")
+
 
 
 def main() -> None:

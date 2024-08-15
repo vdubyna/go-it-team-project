@@ -55,3 +55,24 @@ class Notes:
         note = Note(title, text)
         self.notes.append(note)
         return f"Note with title: '{title}' added."
+
+    def change_note(self, title: str, new_content: str) -> str:
+        if not (note := self.find_note(title)):
+            return f"Note with title: '{title}' is not found."
+
+        note.content = Content(new_content) if new_content else note.content
+        return f"Note with title: '{title}' changed."
+
+    def delete_note(self, title: str) -> str:
+        if not (note := self.find_note(title)):
+            return f"Note with title: '{title}' is not found."
+
+        self.notes.remove(note)
+        return f"Note with title: '{title}' deleted."
+
+    def show_all(self) -> str:
+        if not self.notes:
+            return "No notes available."
+
+        divider = "-" * 40
+        return "\n\n".join(f"{divider}\n{note}\n{divider}" for note in self.notes)

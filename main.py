@@ -82,6 +82,37 @@ def birthdays(args, book: AddressBook):
 
 
 @input_error
+def add_tags(args, book: AddressBook):
+    name, *tags = args
+    record = book.find(name)
+    if record is None:
+        return f"The record with name '{name}' is not found."
+
+    record.add_tags(tags)
+    return "Tags added."
+
+
+@input_error
+def remove_tags(args, book: AddressBook):
+    name, *tags = args
+    record = book.find(name)
+    if record is None:
+        return f"The record with name '{name}' is not found."
+
+    record.remove_tags(tags)
+    return "Tags removed."
+
+
+@input_error
+def show_all_by_tag(args, book: AddressBook):
+    try:
+        tag, *_ = args
+    except (ValueError, IndexError):
+        return "Please provide at least one tag."
+    return book.get_records_by_tag(tag)
+
+
+@input_error
 def add_note(notes: Notes, title: str) -> str:
     """Add a new note to notes."""
     if notes.find_note(title):
@@ -379,6 +410,14 @@ def main() -> None:
             print(find_note(notes, title))
         elif choice == "Show all notes":
             print(show_all_notes(notes))
+        elif choice == "add-tags":
+            print(add_tags(args, contacts))
+        elif choice == "remove-tags":
+            print(remove_tags(args, contacts))
+        elif choice == "all-by-tag":
+            print(show_all_by_tag(args, contacts))
+        else:
+            print("Invalid command.")
         print()
 
 

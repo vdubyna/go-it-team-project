@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from collections import UserDict
+from typing import Optional
 
 from .record import Record
 
@@ -24,7 +25,7 @@ class AddressBook(UserDict):
         self.data[new_name] = current_record
         self.delete(old_name)
 
-    def find(self, name: str) -> Record:
+    def find(self, name: str) -> Optional[Record]:
         """Find the record by name."""
         return self.data.get(name)
 
@@ -55,8 +56,24 @@ class AddressBook(UserDict):
 
                 if 0 <= days_until_birthday <= 7:
                     if birthday_this_year.weekday() >= 5:
-                        birthday_this_year += timedelta(days=(7 - birthday_this_year.weekday()))
+                        birthday_this_year += timedelta(
+                            days=(7 - birthday_this_year.weekday())
+                        )
 
-                    upcoming_birthdays.append(f"{user.name.value}: {birthday_this_year.strftime('%d.%m.%Y')}")
+                    upcoming_birthdays.append(
+                        f"{user.name.value}: {birthday_this_year.strftime('%d.%m.%Y')}"
+                    )
 
         return "\n".join(upcoming_birthdays)
+
+    def get_records_by_tag(self, tag: str) -> str:
+        """Get the records that have at least one of passed tag."""
+        records = []
+        for record in self.data.values():
+            for record_tag in getattr(record, "tags", []):
+                if record_tag.value == tag:
+                    records.append(record)
+                    break
+        if not records:
+            return f"No records with '{tag}' tag found."
+        return "\n".join(str(record) for record in records)

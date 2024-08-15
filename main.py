@@ -96,17 +96,6 @@ def show_all_contacts(book: AddressBook) -> str:
 
 
 @input_error
-def add_birthday(args, book: AddressBook):
-    name, birthday, *_ = args
-    record = book.find(name)
-    if record is None:
-        return f"The record with name '{name}' is not found."
-
-    record.add_birthday(birthday)
-    return "Birthday added."
-
-
-@input_error
 def show_birthday(args, book: AddressBook):
     name, *_ = args
     record = book.find(name)
@@ -297,7 +286,6 @@ def main() -> None:
                 "Delete phone",
                 "Show phone number",
                 "Show all contacts",
-                "Add birthday",
                 "Show birthday",
                 "Show upcoming birthdays",
                 "Search contacts",
@@ -324,9 +312,6 @@ def main() -> None:
             print(show_phone(args, contacts))
         elif choice == "Show all contacts":
             print(show_all_contacts(contacts))
-        elif choice == "Add birthday":
-            args = input("Enter contact name and birthday: ").split()
-            print(add_birthday(args, contacts))
         elif choice == "Show birthday":
             args = input("Enter contact name: ").split()
             print(show_birthday(args, contacts))

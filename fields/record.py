@@ -94,3 +94,6 @@ class Record:
             if tag.value not in tags:
                 filtered.append(tag)
         self.tags = filtered
+    
+    def includes_tag(self, tag: str) -> bool:
+        return any(t.value == tag for t in getattr(self, "tags", []))

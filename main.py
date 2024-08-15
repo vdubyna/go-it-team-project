@@ -8,16 +8,25 @@ from fields.notes import Note, Notes
 from decorators import input_error
 from tabulate import tabulate
 from utils.suggest_input import suggest_name_input
+from utils import parse_input, parse_flags
 
 init(autoreset=True)
 
 
+
 @input_error
-def parse_input(user_input: str) -> tuple:
-    """Parse user input into command and arguments."""
-    cmd, *args = user_input.split()
-    cmd = cmd.strip().lower()
-    return cmd, *args
+def add_contact(args: list, book: AddressBook) -> str:
+    """Add a new contact to the address book."""
+    name, phone, *_ = args
+    record = book.find(name)
+    message = "Contact updated."
+    if record is None:
+        record = Record(name)
+        book.add_record(record)
+        message = "Contact added."
+    if phone:
+        record.add_phone(phone)
+    return message
 
 
 @input_error
@@ -60,6 +69,14 @@ def show_all_contacts(book: AddressBook) -> str:
         table.append([record.name.value, phones, email, address, birthday])
 
     return tabulate(table, headers=["Name", "Phone", "Email", "Address", "Birthday"], tablefmt="grid")
+    # flags, skipped = parse_flags(args, ['tag', 'sort', 'order'])
+    # tag = flags.get('tag', '')
+    # sort = flags.get('sort', 'name')
+    # order = flags.get('order', 'asc')
+    # records = book.get_records(sort, order, tag)
+    # if skipped:
+    #     print('Unknown arguments:', skipped)
+    # return "\n".join(f"{record.name}: {record}" for record in records)
 
 
 @input_error
@@ -101,15 +118,6 @@ def remove_tags(args, book: AddressBook):
 
     record.remove_tags(tags)
     return "Tags removed."
-
-
-@input_error
-def show_all_by_tag(args, book: AddressBook):
-    try:
-        tag, *_ = args
-    except (ValueError, IndexError):
-        return "Please provide at least one tag."
-    return book.get_records_by_tag(tag)
 
 
 @input_error
@@ -387,6 +395,10 @@ def main() -> None:
             print(delete_contact(args, contacts))
         elif choice == "Show all contacts":
             print(show_all_contacts(contacts))
+            print(show_all_contacts(args, contacts))
+        elif choice == "Add birthday":
+            args = input("Enter contact name and birthday: ").split()
+            print(add_birthday(args, contacts))
         elif choice == "Show birthday":
             args = suggest_name_input("Enter contact name: ", book=contacts).split()
             print(show_birthday(args, contacts))
@@ -414,8 +426,6 @@ def main() -> None:
             print(add_tags(args, contacts))
         elif choice == "remove-tags":
             print(remove_tags(args, contacts))
-        elif choice == "all-by-tag":
-            print(show_all_by_tag(args, contacts))
         else:
             print("Invalid command.")
         print()

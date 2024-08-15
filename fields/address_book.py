@@ -66,14 +66,14 @@ class AddressBook(UserDict):
 
         return "\n".join(upcoming_birthdays)
 
-    def get_records_by_tag(self, tag: str) -> str:
-        """Get the records that have at least one of passed tag."""
-        records = []
-        for record in self.data.values():
-            for record_tag in getattr(record, "tags", []):
-                if record_tag.value == tag:
-                    records.append(record)
-                    break
-        if not records:
-            return f"No records with '{tag}' tag found."
-        return "\n".join(str(record) for record in records)
+    def get_records(self, sort: str = "name", order: str = "asc", tag: str = "") -> list[Record]:
+        """Get the records sorted by the passed parameter."""
+        records: list[Record] = list(self.data.values())
+        if tag:
+            records = [record for record in records if record.includes_tag(tag)]
+        return sorted(
+            records,
+            key=lambda record: getattr(record, sort).value,
+            reverse=False if order == "asc" else True,
+        )
+        

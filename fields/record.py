@@ -68,3 +68,7 @@ class Record:
     def edit_address(self, new_address: str) -> None:
         """Edit the physical address in the record."""
         self.address = Address(new_address)
+
+    def get_info_with_title(self, title: str) -> str:
+        """Make readable info with current record state and title."""
+        return title + "\n" + str(self)

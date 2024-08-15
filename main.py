@@ -262,22 +262,22 @@ def edit_contact(book: AddressBook) -> str:
         old_phone = input(Fore.LIGHTMAGENTA_EX + "Enter the old phone number: " + Fore.RESET)
         new_phone = input(Fore.LIGHTCYAN_EX + "Enter the new phone number: " + Fore.RESET)
         record.edit_phone(old_phone, new_phone)
-        return "Phone number updated successfully."
+        return record.get_info_with_title("Phone number updated successfully.")
 
     elif field_to_edit == "Email":
         new_email = input(Fore.LIGHTCYAN_EX + "Enter the new email address: " + Fore.RESET)
         record.edit_email(new_email)
-        return "Email address updated successfully."
+        return record.get_info_with_title("Email address updated successfully.")
 
     elif field_to_edit == "Address":
         new_address = input(Fore.LIGHTCYAN_EX +  "Enter the new address: " + Fore.RESET)
         record.edit_address(new_address)
-        return "Address updated successfully."
+        return record.get_info_with_title("Address updated successfully.")
 
     elif field_to_edit == "Birthday":
         new_birthday = input(Fore.LIGHTCYAN_EX + "Enter the new birthday (YYYY-MM-DD): " + Fore.RESET)
         record.add_birthday(new_birthday)
-        return "Birthday updated successfully."
+        return record.get_info_with_title("Birthday updated successfully.")
 
 
 

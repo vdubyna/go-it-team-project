@@ -5,6 +5,7 @@ from InquirerPy import inquirer
 from colorama import init, Fore, Back, Style
 from fields.validators import validate_name, validate_phone, validate_email, validate_address, validate_birthday
 from decorators import input_error
+from tabulate import tabulate
 
 init(autoreset=True)
 
@@ -89,11 +90,20 @@ def delete_contact(args, book: AddressBook):
 
 
 def show_all_contacts(book: AddressBook) -> str:
-    """Show all contacts."""
+    """Show all contacts in a formatted table."""
     if not book:
         return "Contacts are empty."
 
-    return "\n".join(f"{name}: {phone}" for name, phone in book.data.items())
+    table = []
+    for record in book.data.values():
+        phones = "; ".join(phone.value for phone in record.phones)
+        email = record.email.value if record.email else "N/A"
+        address = record.address.value if record.address else "N/A"
+        birthday = record.birthday.date.strftime("%d.%m.%Y") if record.birthday else "N/A"
+
+        table.append([record.name.value, phones, email, address, birthday])
+
+    return tabulate(table, headers=["Name", "Phone", "Email", "Address", "Birthday"], tablefmt="grid")
 
 
 @input_error
@@ -195,36 +205,36 @@ def add_contact_interactive(book: AddressBook) -> str:
     # Input email with validation
     while True:
         email = input(Fore.LIGHTYELLOW_EX + "Email: " + Fore.RESET)
-        if validate_email(email):
+        if not email or validate_email(email):
             break
         print(Fore.LIGHTRED_EX + "Invalid email address. Please enter a valid email.")
 
     # Input address with validation
     while True:
         address = input(Fore.LIGHTYELLOW_EX + "Address: " + Fore.RESET)
-        if validate_address(address):
+        if not address or validate_address(address):
             break
         print(Fore.LIGHTRED_EX + "Invalid address. Please enter a valid address.")
 
     # Input birthday with validation
     while True:
         birthday = input(Fore.LIGHTYELLOW_EX + "Birthday (DD.MM.YYYY): " + Fore.RESET)
-        if validate_birthday(birthday):
+        if not birthday or validate_birthday(birthday):
             break
         print(Fore.LIGHTRED_EX + "Invalid birthday. Please enter in format DD.MM.YYYY")
 
     # Create a new record
     record = book.find(name)
-    message = "Contact updated."
+    message = Fore.LIGHTGREEN_EX + "Contact updated." + Fore.RESET
     if record is None:
         record = Record(name)
         book.add_record(record)
-        message = "Contact added."
+        message = Fore.LIGHTGREEN_EX + "Contact added." + Fore.RESET
 
     record.add_phone(phone)
-    record.add_email(email)
-    record.add_address(address)
-    record.add_birthday(birthday)
+    email and record.add_email(email)
+    address and record.add_address(address)
+    birthday and record.add_birthday(birthday)
 
     return message
 

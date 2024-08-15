@@ -31,13 +31,47 @@ def add_contact(args: list, book: AddressBook) -> str:
 @input_error
 def change_contact(args: list, book: AddressBook) -> str:
     """Update an existing contact in the address book."""
-    name, old_phone, new_phone = args
+    if len(args) != 4:
+        return "Invalid arguments. Usage: change-contact [name] [field] [old_value] [new_value]"
+
+    name, field, old_value, new_value = args
     record = book.find(name)
     if record is None:
         return f"The record with name '{name}' is not found."
 
-    record.edit_phone(old_phone, new_phone)
-    return "Contact updated."
+    field = field.lower()
+
+    # Check if the given field is in the supported values
+    if field not in {'name', 'email', 'phone', 'birthday'}:
+        return f"Field '{field}' is not supported. Use 'name', 'email', 'phone' or 'birthday'."
+
+    if field == "name":
+        # Change the name of the record itself and the key in the contacts
+        try:
+            record.change_name(new_value)
+            book.change_name(old_value, new_value)
+        except KeyError as e:
+            return str(e)
+
+    elif field == "email":
+        try:
+            record.edit_email(old_value, new_value)
+        except ValueError as e:
+            return str(e)
+
+    elif field == "phone":
+        try:
+            record.edit_phone(old_value, new_value)
+        except ValueError as e:
+            return str(e)
+
+    elif field == "birthday":
+        try:
+            record.add_birthday(new_value)
+        except ValueError as e:
+            return str(e)
+
+    return f"{field.capitalize()} changed!"
 
 
 @input_error
@@ -49,6 +83,20 @@ def show_phone(args: list, book: AddressBook) -> str:
         return f"The record with name '{name}' is not found."
 
     return str(record)
+
+
+@input_error
+def delete_contact(args, book: AddressBook):
+    if len(args) != 1:
+        return "Invalid number of arguments. Usage: delete-contact [name]"
+
+    name = args[0]
+    record = book.find(name)
+    if record:
+        book.delete(name)
+        return f"Contact '{name}' successfully deleted"
+
+    return f"No contact with the name '{name}' exists"
 
 
 def show_all_contacts(book: AddressBook) -> str:
@@ -125,8 +173,10 @@ def main() -> None:
             print("How can I help you?")
         elif command == "add":
             print(add_contact(args, contacts))
-        elif command == "change":
+        elif command == "change-contact":
             print(change_contact(args, contacts))
+        elif command == "delete-contact":
+            print(delete_contact(args, contacts))
         elif command == "phone":
             print(show_phone(args, contacts))
         elif command == "all":

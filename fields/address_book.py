@@ -14,6 +14,16 @@ class AddressBook(UserDict):
 
         self.data[record.name.value] = record
 
+    def change_name(self, old_name, new_name):
+        """Change the name of the record in the address book."""
+        if old_name not in self.data:
+            raise KeyError(f"The record with name '{old_name}' is not found.")
+
+        # Change the key for the existing record
+        current_record = self.data[old_name]
+        self.data[new_name] = current_record
+        self.delete(old_name)
+
     def find(self, name: str) -> Record:
         """Find the record by name."""
         return self.data.get(name)

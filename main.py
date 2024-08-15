@@ -308,7 +308,7 @@ def edit_contact(book: AddressBook) -> str:
     # Choose the field to edit
     field_to_edit = inquirer.select(
         message="Which field would you like to edit?",
-        choices=["Phone", "Email", "Address", "Birthday", "Cancel"]
+        choices=["Phones", "Email", "Address", "Birthday", "Cancel"]
     ).execute()
 
     if field_to_edit == "Cancel":

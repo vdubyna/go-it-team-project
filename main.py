@@ -2,11 +2,13 @@ import pickle
 from fields.address_book import AddressBook
 from fields.record import Record
 from InquirerPy import inquirer
-from colorama import init, Fore, Back, Style
+from colorama import init, Fore
 from fields.validators import validate_name, validate_phone, validate_email, validate_address, validate_birthday
+from fields.notes import Note, Notes
 from decorators import input_error
 
 init(autoreset=True)
+
 
 @input_error
 def parse_input(user_input: str) -> tuple:
@@ -114,6 +116,58 @@ def birthdays(args, book: AddressBook):
     return book.get_upcoming_birthdays()
 
 
+@input_error
+def add_note(notes: Notes, title: str) -> str:
+    """Add a new note to notes."""
+    if notes.find_note(title):
+        return f"Note with title '{title}' already exists."
+
+    text = input("Enter a text: ")
+    try:
+        message = notes.add_note(title, text)
+        return message
+    except ValueError as e:
+        return str(e)
+
+
+@input_error
+def change_note(notes: Notes, title: str) -> str:
+    """Change the existing note by its title."""
+    if not (note := notes.find_note(title)):
+        return f"Note with title: '{title}' is not found."
+
+    new_content = input("Enter new content: ")
+    if new_content:
+        note.content = new_content
+
+    return f"Note with title '{title}' successfully edited."
+
+
+@input_error
+def delete_note(notes: Notes, title: str) -> str:
+    """Delete the existing note by its title."""
+    if not notes.find_note(title):
+        return f"Note with title: '{title}' is not found."
+
+    message = notes.delete_note(title)
+    return message
+
+
+@input_error
+def find_note(notes: Notes, title: str) -> str | Note:
+    """Find the existing note by its title."""
+    if not (note := notes.find_note(title)):
+        return f"Note with title: '{title}' is not found."
+
+    return note
+
+
+@input_error
+def show_all_notes(notes: Notes) -> str:
+    """Show all existing notes."""
+    return notes.show_all()
+
+
 def save_data(book: AddressBook, filename: str = "var/addressbook.pkl") -> None:
     """Save data to a file using pickle serialization."""
 
@@ -129,6 +183,7 @@ def load_data(filename: str = "var/addressbook.pkl") -> AddressBook:
             return pickle.load(file)
     except FileNotFoundError:
         return AddressBook()
+
 
 @input_error
 def search_contacts(query: str, book: AddressBook) -> str:
@@ -269,12 +324,12 @@ def edit_contact(book: AddressBook) -> str:
         return "Birthday updated successfully."
 
 
-
 def main() -> None:
     """Main function to handle user input and commands."""
     print(Fore.GREEN + "Welcome to the assistant bot!")
     address_book_file = "var/addressbook.pkl"
     contacts = load_data(address_book_file)
+    notes = Notes()
 
     while True:
         choice = inquirer.select(
@@ -289,6 +344,11 @@ def main() -> None:
                 "Show birthday",
                 "Show upcoming birthdays",
                 "Search contacts",
+                "Add note",
+                "Change note",
+                "Delete note",
+                "Find note",
+                "Show all notes",
                 "Exit",
             ],
         ).execute()
@@ -321,6 +381,20 @@ def main() -> None:
         elif choice == "Search contacts":
             query = input("Enter search query: ")
             print(search_contacts(query, contacts))
+        elif choice == "Add note":
+            title = input("Enter a title: ")
+            print(add_note(notes, title))
+        elif choice == "Change note":
+            title = input("Enter a title: ")
+            print(change_note(notes, title))
+        elif choice == "Delete note":
+            title = input("Enter a title: ")
+            print(delete_note(notes, title))
+        elif choice == "Find note":
+            title = input("Enter the title to search for: ")
+            print(find_note(notes, title))
+        elif choice == "Show all notes":
+            print(show_all_notes(notes))
         print()
 
 

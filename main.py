@@ -7,6 +7,7 @@ from fields.validators import validate_name, validate_phone, validate_email, val
 from fields.notes import Note, Notes
 from decorators import input_error
 from tabulate import tabulate
+from utils.suggest_input import suggest_name_input
 
 init(autoreset=True)
 
@@ -251,7 +252,9 @@ def add_contact_interactive(book: AddressBook) -> str:
 def edit_contact(book: AddressBook) -> str:
     """Edit an existing contact by updating its fields."""
 
-    name = input("Enter the name of the contact you want to edit: ")
+    name = suggest_name_input(
+        "Enter the name of the contact you want to edit: ", book=book
+    )
 
     # Find the record by name
     record = book.find(name)
@@ -347,12 +350,14 @@ def main() -> None:
         elif choice == "Change contact":
             print(edit_contact(contacts))
         elif choice == "Delete contact":
-            args = input("Enter contact name to delete: ").split()
+            args = suggest_name_input(
+                "Enter contact name to delete: ", book=contacts
+            ).split()
             print(delete_contact(args, contacts))
         elif choice == "Show all contacts":
             print(show_all_contacts(contacts))
         elif choice == "Show birthday":
-            args = input("Enter contact name: ").split()
+            args = suggest_name_input("Enter contact name: ", book=contacts).split()
             print(show_birthday(args, contacts))
         elif choice == "Show upcoming birthdays":
             args = input("Enter number of days to check: ").split()

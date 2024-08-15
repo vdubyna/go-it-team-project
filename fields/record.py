@@ -1,6 +1,8 @@
 from .phone import Phone
 from .name import Name
 from .birthday import Birthday
+from .email import Email
+from .address import Address
 
 
 class Record:
@@ -9,11 +11,12 @@ class Record:
     def __init__(self, name: str) -> None:
         self.name = Name(name)
         self.phones: list[Phone] = []
-        self.emails: list = []  # TODO: implement Email class with the validation + adding the email
-        self.birthday = None
+        self.address: Address|None = None
+        self.email: Email|None = None
+        self.birthday: str|None = None
 
     def __str__(self) -> str:
-        return f"Contact name: {self.name.value} || phones: {'; '.join(p.value for p in self.phones)} || birthday: {self.birthday}"
+        return f"Contact name: {self.name.value} || phones: {'; '.join(p.value for p in self.phones)} || birthday: {self.birthday} || email: {self.email} || address: {self.address}"
 
     def add_birthday(self, birthday):
         """Add a birthday to the record."""
@@ -50,10 +53,18 @@ class Record:
     def change_name(self, new_name: str) -> None:
         self.name = Name(new_name)
 
-    def edit_email(self, old_email: str, new_email: str) -> None:
-        for email in self.emails:
-            if email.value == old_email:
-                email.value = new_email
-                return
+    def add_email(self, email: str) -> None:
+        """Add an email address to the record."""
+        self.email = Email(email)
 
-        raise ValueError(f"Email '{old_email}' not found in contact.")
+    def edit_email(self, new_email: str) -> None:
+        """Edit the email address in the record."""
+        self.email = Email(new_email)
+
+    def add_address(self, address: str) -> None:
+        """Add a physical address to the record."""
+        self.address = Address(address)
+
+    def edit_address(self, new_address: str) -> None:
+        """Edit the physical address in the record."""
+        self.address = Address(new_address)

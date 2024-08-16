@@ -3,7 +3,7 @@ from fields.address_book import AddressBook
 from fields.record import Record
 from InquirerPy import inquirer
 from colorama import init, Fore
-from fields.validators import validate_name, validate_phone, validate_email, validate_address, validate_birthday
+from fields.validators import validate_name, validate_phone, validate_email, validate_address, validate_birthday, validate_tags
 from fields.notes import Note, Notes
 from decorators import input_error
 from utils import suggest_name_input, render_table, color_input
@@ -210,6 +210,15 @@ def add_contact_interactive(book: AddressBook) -> str:
             break
         print(Fore.LIGHTRED_EX + "Invalid birthday. Please enter in format DD.MM.YYYY")
 
+    # Input tags
+    while True:
+        tags = input(Fore.LIGHTYELLOW_EX + "Tags: " + Fore.RESET).split()
+        if not tags or validate_tags(tags):
+            break
+        print(Fore.LIGHTRED_EX + f"Invalid tags. The tag should be between 3 and 10 characters long.")
+        
+
+
     # Create a new record
     record = book.find(name)
     message = Fore.LIGHTGREEN_EX + "Contact updated." + Fore.RESET
@@ -222,6 +231,7 @@ def add_contact_interactive(book: AddressBook) -> str:
     email and record.add_email(email)
     address and record.add_address(address)
     birthday and record.add_birthday(birthday)
+    tags and record.add_tags(tags)
 
     return message
 
@@ -241,7 +251,7 @@ def edit_contact(book: AddressBook) -> str:
     # Choose the field to edit
     field_to_edit = inquirer.select(
         message="Which field would you like to edit?",
-        choices=["Phones", "Email", "Address", "Birthday", "Cancel"]
+        choices=["Phones", "Email", "Address", "Birthday", "Tags", "Cancel"]
     ).execute()
 
     if field_to_edit == "Cancel":
@@ -253,9 +263,6 @@ def edit_contact(book: AddressBook) -> str:
             message="Which phone would you like to edit/remove?",
             choices=['New'] + record.phones + ['Back']
         ).execute()
-
-        if field_to_edit == "Back":
-            return "Edit operation cancelled."
 
         if phone_to_remove_edit == "New":
             new_phone = input(Fore.LIGHTCYAN_EX + "Enter phone number to add: " + Fore.RESET)
@@ -291,6 +298,27 @@ def edit_contact(book: AddressBook) -> str:
         new_birthday = input(Fore.LIGHTCYAN_EX + "Enter the new birthday (YYYY-MM-DD): " + Fore.RESET)
         record.add_birthday(new_birthday)
         return record.get_info_with_title("Birthday updated successfully.")
+    
+    elif field_to_edit == "Tags":
+        choiced = inquirer.select(
+            message="Which tag would you like to edit/remove?",
+            choices=['New'] + record.tags + ['Back']
+        ).execute()
+        if choiced == "Back":
+            return "Operation cancelled."
+        elif choiced == "New":
+            value = color_input("Enter name to add: ")
+            record.add_tags([value])
+            return record.get_info_with_title(f"Tag '{value}' added successfully.")
+        else:
+            selected_tag = choiced
+            input_value = color_input("Enter new name or 'r' to remove: ")
+            record.remove_tags([selected_tag.value])
+            if input_value == "r":
+                return record.get_info_with_title(f"Tag '{selected_tag}' removed successfully.")
+            else:
+                record.add_tags([input_value])
+                return record.get_info_with_title(f"Tag '{selected_tag}' renamed into '{input_value}' successfully.")
 
 
 def main() -> None:
@@ -309,8 +337,6 @@ def main() -> None:
                 "Show birthday",
                 "Show upcoming birthdays",
                 "Search contacts",
-                "Add tags",
-                "Remove tags",
                 "Add note",
                 "Change note",
                 "Delete note",
@@ -343,10 +369,6 @@ def main() -> None:
             print(birthdays(args, contacts))
         elif choice == "Search contacts":
             print(search_contacts(contacts))
-        elif choice == "Add tags":
-            print(add_tags(contacts))
-        elif choice == "Remove tags":
-            print(remove_tags(contacts))
         elif choice == "Add note":
             title = input("Enter a title: ")
             print(add_note(notes, title))

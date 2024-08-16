@@ -34,6 +34,14 @@ def validate_birthday(birthday: str) -> bool:
     except ValueError:
         return False
 
+def validate_tags(tags: list[str]) -> bool:
+    """Validate the tags. This is a basic validation and can be expanded."""
+    for tag in tags:
+        length = len(tag)
+        if length < 3 or length > 10:
+            return False
+    return True
+
 
 # add a red star to indicate that the field is required
 def required_field(value: str) -> str:

@@ -15,8 +15,8 @@ class Record:
         self.phones: list[Phone] = []
         self.address: Address | None = None
         self.email: Email | None = None
-        self.tags: Optional[list[Tag]] = []
-        self.birthday: str | None = None
+        self.tags: list[Tag] = []
+        self.birthday: Birthday | None = None
 
     def __str__(self) -> str:
         phones_str = "; ".join(phone.value for phone in self.phones)

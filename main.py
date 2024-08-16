@@ -6,9 +6,7 @@ from colorama import init, Fore
 from fields.validators import validate_name, validate_phone, validate_email, validate_address, validate_birthday
 from fields.notes import Note, Notes
 from decorators import input_error
-from tabulate import tabulate
-from utils.suggest_input import suggest_name_input
-from utils import parse_input, parse_flags
+from utils import suggest_name_input, render_table, color_input
 
 init(autoreset=True)
 
@@ -58,25 +56,7 @@ def show_all_contacts(book: AddressBook) -> str:
     """Show all contacts in a formatted table."""
     if not book:
         return "Contacts are empty."
-
-    table = []
-    for record in book.data.values():
-        phones = "; ".join(phone.value for phone in record.phones)
-        email = record.email.value if record.email else "N/A"
-        address = record.address.value if record.address else "N/A"
-        birthday = record.birthday.date.strftime("%d.%m.%Y") if record.birthday else "N/A"
-
-        table.append([record.name.value, phones, email, address, birthday])
-
-    return tabulate(table, headers=["Name", "Phone", "Email", "Address", "Birthday"], tablefmt="grid")
-    # flags, skipped = parse_flags(args, ['tag', 'sort', 'order'])
-    # tag = flags.get('tag', '')
-    # sort = flags.get('sort', 'name')
-    # order = flags.get('order', 'asc')
-    # records = book.get_records(sort, order, tag)
-    # if skipped:
-    #     print('Unknown arguments:', skipped)
-    # return "\n".join(f"{record.name}: {record}" for record in records)
+    return render_table(list(book.data.values()))
 
 
 @input_error
@@ -97,25 +77,25 @@ def show_birthday(args, book: AddressBook):
 def birthdays(args, book: AddressBook):
     return book.get_upcoming_birthdays()
 
-
 @input_error
-def add_tags(args, book: AddressBook):
-    name, *tags = args
+def add_tags(book: AddressBook):
+    name, *_ = suggest_name_input("Enter contact name: ", book).split()
     record = book.find(name)
     if record is None:
         return f"The record with name '{name}' is not found."
-
+    tags = color_input("Enter tags: ").split()
     record.add_tags(tags)
     return "Tags added."
 
 
 @input_error
-def remove_tags(args, book: AddressBook):
-    name, *tags = args
+def remove_tags(book: AddressBook):
+    name, *_ = suggest_name_input("Enter contact name: ", book).split()
     record = book.find(name)
     if record is None:
         return f"The record with name '{name}' is not found."
-
+    tags = color_input("Enter tags: ").split()
+    record.add_tags(tags)
     record.remove_tags(tags)
     return "Tags removed."
 
@@ -192,44 +172,19 @@ def load_data(filename: str = "var/addressbook.pkl") -> (AddressBook, Notes):
 
 
 @input_error
-def search_contacts(query: str, book: AddressBook) -> str:
+def search_contacts(book: AddressBook) -> str:
     """Search for contacts by any field."""
-    results = []
-    query_lower = query.lower()
+    query = color_input("Enter search query: ")
+    tag = color_input("Enter tag (optional): ")
 
-    for record in book.data.values():
-        found = False
+    order = inquirer.select(
+        message="Order: ",
+        choices=["asc", "desc"],
+    ).execute()
 
-        # Check name
-        if query_lower in str(record.name).lower():
-            results.append(str(record))
-            found = True
-
-        # Check phones
-        if not found:
-            for phone in record.phones:
-                if query_lower in phone.value:
-                    results.append(str(record))
-                    found = True
-                    break
-
-        # Check email
-        if not found and record.email and query_lower in str(record.email.value):
-            results.append(str(record))
-            found = True
-
-        # Check address
-        if not found and record.address and query_lower in str(record.address.value):
-            results.append(str(record))
-            found = True
-
-        # Check birthday
-        if not found and record.birthday and query_lower in str(record.birthday.value):
-            results.append(str(record))
-            found = True
-
+    results: list[Record] = book.search_records(query, tag, order=order)
     if results:
-        return "\n".join(results)
+        return render_table(results)
     return "No matching contacts found."
 
 
@@ -371,6 +326,8 @@ def main() -> None:
                 "Show birthday",
                 "Show upcoming birthdays",
                 "Search contacts",
+                "Add tags",
+                "Remove tags",
                 "Add note",
                 "Change note",
                 "Delete note",
@@ -395,10 +352,6 @@ def main() -> None:
             print(delete_contact(args, contacts))
         elif choice == "Show all contacts":
             print(show_all_contacts(contacts))
-            print(show_all_contacts(args, contacts))
-        elif choice == "Add birthday":
-            args = input("Enter contact name and birthday: ").split()
-            print(add_birthday(args, contacts))
         elif choice == "Show birthday":
             args = suggest_name_input("Enter contact name: ", book=contacts).split()
             print(show_birthday(args, contacts))
@@ -406,8 +359,11 @@ def main() -> None:
             args = input("Enter number of days to check: ").split()
             print(birthdays(args, contacts))
         elif choice == "Search contacts":
-            query = input("Enter search query: ")
-            print(search_contacts(query, contacts))
+            print(search_contacts(contacts))
+        elif choice == "Add tags":
+            print(add_tags(contacts))
+        elif choice == "Remove tags":
+            print(remove_tags(contacts))
         elif choice == "Add note":
             title = input("Enter a title: ")
             print(add_note(notes, title))
@@ -422,12 +378,6 @@ def main() -> None:
             print(find_note(notes, title))
         elif choice == "Show all notes":
             print(show_all_notes(notes))
-        elif choice == "add-tags":
-            print(add_tags(args, contacts))
-        elif choice == "remove-tags":
-            print(remove_tags(args, contacts))
-        else:
-            print("Invalid command.")
         print()
 
 

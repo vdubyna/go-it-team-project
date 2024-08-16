@@ -10,23 +10,6 @@ from utils import suggest_name_input, render_table, color_input
 
 init(autoreset=True)
 
-
-
-@input_error
-def add_contact(args: list, book: AddressBook) -> str:
-    """Add a new contact to the address book."""
-    name, phone, *_ = args
-    record = book.find(name)
-    message = "Contact updated."
-    if record is None:
-        record = Record(name)
-        book.add_record(record)
-        message = "Contact added."
-    if phone:
-        record.add_phone(phone)
-    return message
-
-
 @input_error
 def show_phone(args: list, book: AddressBook) -> str:
     """Show the phone number for the contact."""

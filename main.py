@@ -130,7 +130,14 @@ def find_note(notes: Notes, title: str) -> str | Note:
 @input_error
 def show_all_notes(notes: Notes) -> str:
     """Show all existing notes."""
-    return notes.show_all()
+    if not notes.notes:
+        return tabulate([["No notes available."]], tablefmt="grid")
+
+    table = []
+    for note in notes.notes:
+        table.append([note.title.value, note.content.value])
+
+    return tabulate(table, headers=["Title", "Content"], tablefmt="grid")
 
 
 def save_data(book: AddressBook, notes: Notes, filename: str = "var/addressbook.pkl") -> None:
@@ -350,9 +357,7 @@ def main() -> None:
         elif choice == "Change contact":
             print(edit_contact(contacts))
         elif choice == "Delete contact":
-            args = suggest_name_input(
-                "Enter contact name to delete: ", book=contacts
-            ).split()
+            args = suggest_name_input("Enter contact name to delete: ", book=contacts).split()
             print(delete_contact(args, contacts))
         elif choice == "Show all contacts":
             print(show_all_contacts(contacts))

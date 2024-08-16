@@ -46,9 +46,7 @@ class Record:
                 break
 
         if not found:
-            raise ValueError(
-                "The specified number does not exist or there are no phone numbers for the contact."
-            )
+            raise ValueError("The specified number does not exist or there are no phone numbers for the contact.")
 
     def find_phone(self, number: str) -> Phone | None:
         """Find a phone number in the record."""

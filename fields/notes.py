@@ -1,4 +1,6 @@
 from typing import List
+from tabulate import tabulate
+
 from .base_collection import BaseCollection
 from .base_entity import BaseEntity
 from .base_field import Field
@@ -82,6 +84,12 @@ class Notes(BaseCollection[Note]):
             return None
         return record
     
-    def render_table(self, notes: list[Note]) -> str:
-        divider = "-" * 40
-        return "\n\n".join(f"{divider}\n{note}\n{divider}" for note in notes)
+    def render_table(self, notes: list[Note], no_data_str: str) -> str:
+        if not notes:
+            return tabulate([[no_data_str]], tablefmt="grid")
+        table = []
+        for note in notes:
+            tags = getattr(note, "tags", [])
+            tags_str = "; ".join(tag.value for tag in tags) if tags else "N/A"
+            table.append([note.title.value, note.content.value, tags_str])
+        return tabulate(table, headers=["Title", "Content", "Tags"], tablefmt="grid")

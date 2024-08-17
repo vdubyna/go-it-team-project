@@ -38,9 +38,7 @@ def delete_contact(args, book: AddressBook):
 
 def show_all_contacts(book: AddressBook) -> str:
     """Show all contacts in a formatted table."""
-    if not book:
-        return "Contacts are empty."
-    return book.render_table(list(book.data.values()))
+    return book.render_table(list(book.data.values()), no_data_str="Contacts are empty.")
 
 
 @input_error
@@ -146,10 +144,7 @@ def find_note(notes: Notes, title: str) -> str | Note:
 @input_error
 def show_all_notes(notes: Notes) -> str:
     """Show all existing notes."""
-    records = notes.get_all()
-    if not records:
-        return "No notes available."
-    return notes.render_table(records)
+    return notes.render_table(notes.get_all(), no_data_str="No notes available.")
 
 @input_error
 def search_notes(notes: Notes) -> str:
@@ -162,9 +157,7 @@ def search_notes(notes: Notes) -> str:
     ).execute()
 
     results: list[Note] = notes.search(query, tag, "title", order)
-    if results:
-        return notes.render_table(results)
-    return "No matching contacts found."
+    return notes.render_table(results, no_data_str="No matching notes found.")
 
 
 def save_data(book: AddressBook, notes: Notes, filename: str = "var/addressbook.pkl") -> None:
@@ -198,9 +191,7 @@ def search_contacts(book: AddressBook) -> str:
     ).execute()
 
     results: list[Record] = book.search(query, tag, "name", order)
-    if results:
-        return book.render_table(results)
-    return "No matching contacts found."
+    return book.render_table(results, no_data_str="No matching contacts found.")
 
 
 @input_error

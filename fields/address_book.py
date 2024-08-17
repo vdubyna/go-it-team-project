@@ -76,7 +76,9 @@ class AddressBook(UserDict, BaseCollection[Record]):
             return None
         return record
     
-    def render_table(self, records: list[Record]) -> str:
+    def render_table(self, records: list[Record], no_data_str: str) -> str:
+        if not records:
+            return tabulate([[no_data_str]], tablefmt="grid")
         table = []
         for record in records:
             phones = "; ".join(phone.value for phone in record.phones)

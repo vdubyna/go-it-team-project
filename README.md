@@ -62,6 +62,12 @@ python main.py
 - **Update Contacts:** Modify existing contact information.
 - **Search Contacts:** Search for contacts by name, phone number, or birthday.
 - **View All Contacts:** Display all contacts in your address book.
+- **Birthday Notifications:** View upcoming birthdays to never miss an important date.
+- **Manage Tags:** Add or remove tags from contacts, helping categorize and organize your contacts more effectively.
+- **Add Notes:** Create, edit, and delete notes associated with your contacts or independently.
+- **Search Notes:** Search for notes by title, content, or tags to quickly find relevant information.
+- **Show All Notes:** Display a table of all notes, providing a quick overview of your saved notes.
+- **Search Contacts with Tags:** Allows users to search for contacts by tags, making it easier to find grouped contacts.
 
 ## Usage
 

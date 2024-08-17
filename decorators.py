@@ -2,11 +2,11 @@ def input_error(func):
     def inner(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except ValueError:
-            return "Invalid arguments. Please, provide name and phone number."
-        except KeyError:
-            return "Contact does not exist."
-        except IndexError:
-            return "Invalid arguments. Please, provide name."
+        except ValueError as e:
+            return str(e)
+        except KeyError as e:
+            return str(e)
+        except IndexError as e:
+            return str(e)
 
     return inner

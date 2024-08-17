@@ -1,5 +1,6 @@
 import pickle
 from fields.address_book import AddressBook
+from fields.base_entity import BaseEntity
 from fields.record import Record
 from InquirerPy import inquirer
 from colorama import init, Fore
@@ -84,8 +85,9 @@ def remove_tags(book: AddressBook):
 
 
 @input_error
-def add_note(notes: Notes, title: str) -> str:
+def add_note(notes: Notes) -> str:
     """Add a new note to notes."""
+    title = input("Enter a title: ")
     if notes.find_note(title):
         return f"Note with title '{title}' already exists."
 
@@ -98,21 +100,33 @@ def add_note(notes: Notes, title: str) -> str:
 
 
 @input_error
-def change_note(notes: Notes, title: str) -> str:
+def change_note(notes: Notes) -> str:
     """Change the existing note by its title."""
-    if not (note := notes.find_note(title)):
+    title = input("Enter a title: ")
+    entity = notes.find_note(title)
+    if not entity:
         return f"Note with title: '{title}' is not found."
 
-    new_content = input("Enter new content: ")
-    if new_content:
-        note.content = new_content
+    choice = inquirer.select(
+        message="Which field would you like to edit?",
+        choices=["Content", "Tags", "Cancel"]
+    ).execute()
 
-    return f"Note with title '{title}' successfully edited."
+    if choice == "Cancel":
+        return "Operation cancelled."
+    elif choice == "Content":
+        value = color_input("Enter new content: ")
+        entity.add_content(value)
+        return f"Content edited successfully."
+    elif choice == "Tags":
+        return edit_tag(entity)
 
 
 @input_error
-def delete_note(notes: Notes, title: str) -> str:
+def delete_note(notes: Notes) -> str:
     """Delete the existing note by its title."""
+    title = input("Enter a title: ")
+
     if not notes.find_note(title):
         return f"Note with title: '{title}' is not found."
 
@@ -235,6 +249,27 @@ def add_contact_interactive(book: AddressBook) -> str:
 
     return message
 
+def edit_tag(record: BaseEntity):
+        choiced = inquirer.select(
+            message="Which tag would you like to edit/remove?",
+            choices=['New'] + record.tags + ['Back']
+        ).execute()
+        if choiced == "Back":
+            return "Operation cancelled."
+        elif choiced == "New":
+            value = color_input("Enter name to add: ")
+            record.add_tags([value])
+            return f"Tag '{value}' added successfully."
+        else:
+            selected_tag = choiced
+            input_value = color_input("Enter new name or 'r' to remove: ")
+            record.remove_tags([selected_tag.value])
+            if input_value == "r":
+                return f"Tag '{selected_tag}' removed successfully."
+            else:
+                record.add_tags([input_value])
+                return f"Tag '{selected_tag}' renamed into '{input_value}' successfully."
+
 
 def edit_contact(book: AddressBook) -> str:
     """Edit an existing contact by updating its fields."""
@@ -300,25 +335,7 @@ def edit_contact(book: AddressBook) -> str:
         return record.get_info_with_title("Birthday updated successfully.")
     
     elif field_to_edit == "Tags":
-        choiced = inquirer.select(
-            message="Which tag would you like to edit/remove?",
-            choices=['New'] + record.tags + ['Back']
-        ).execute()
-        if choiced == "Back":
-            return "Operation cancelled."
-        elif choiced == "New":
-            value = color_input("Enter name to add: ")
-            record.add_tags([value])
-            return record.get_info_with_title(f"Tag '{value}' added successfully.")
-        else:
-            selected_tag = choiced
-            input_value = color_input("Enter new name or 'r' to remove: ")
-            record.remove_tags([selected_tag.value])
-            if input_value == "r":
-                return record.get_info_with_title(f"Tag '{selected_tag}' removed successfully.")
-            else:
-                record.add_tags([input_value])
-                return record.get_info_with_title(f"Tag '{selected_tag}' renamed into '{input_value}' successfully.")
+        return edit_tag(record)
 
 
 def main() -> None:
@@ -370,14 +387,11 @@ def main() -> None:
         elif choice == "Search contacts":
             print(search_contacts(contacts))
         elif choice == "Add note":
-            title = input("Enter a title: ")
-            print(add_note(notes, title))
+            print(add_note(notes))
         elif choice == "Change note":
-            title = input("Enter a title: ")
-            print(change_note(notes, title))
+            print(change_note(notes))
         elif choice == "Delete note":
-            title = input("Enter a title: ")
-            print(delete_note(notes, title))
+            print(delete_note(notes))
         elif choice == "Find note":
             title = input("Enter the title to search for: ")
             print(find_note(notes, title))

@@ -1,4 +1,6 @@
 from typing import Optional
+
+from .base_entity import BaseEntity
 from .phone import Phone
 from .name import Name
 from .birthday import Birthday
@@ -7,7 +9,7 @@ from .email import Email
 from .address import Address
 
 
-class Record:
+class Record(BaseEntity):
     """A class for a contact record that contains a name and a list of phone numbers."""
 
     def __init__(self, name: str) -> None:
@@ -17,6 +19,8 @@ class Record:
         self.email: Email | None = None
         self.tags: list[Tag] = []
         self.birthday: Birthday | None = None
+        super().__init__()
+
 
     def __str__(self) -> str:
         phones_str = "; ".join(phone.value for phone in self.phones)
@@ -77,21 +81,3 @@ class Record:
     def get_info_with_title(self, title: str) -> str:
         """Make readable info with current record state and title."""
         return title + "\n" + str(self)
-
-    def add_tags(self, tags: list[str]) -> None:
-        self_tags = getattr(self, "tags", [])
-        for tag in set(tags):
-            if tag not in [tag.value for tag in self_tags]:
-                self_tags.append(Tag(tag))
-        self.tags = self_tags
-
-    def remove_tags(self, tags: list[str]) -> None:
-        self_tags = getattr(self, "tags", [])
-        filtered = []
-        for tag in self_tags:
-            if tag.value not in tags:
-                filtered.append(tag)
-        self.tags = filtered
-    
-    def includes_tag(self, tag: str) -> bool:
-        return any(t.value == tag for t in getattr(self, "tags", []))

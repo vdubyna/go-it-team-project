@@ -1,24 +1,15 @@
 import pickle
 from fields.address_book import AddressBook
+from fields.base_entity import BaseEntity
 from fields.record import Record
 from InquirerPy import inquirer
 from colorama import init, Fore
-from fields.validators import validate_name, validate_phone, validate_email, validate_address, validate_birthday
+from fields.validators import validate_name, validate_phone, validate_email, validate_address, validate_birthday, validate_tags
 from fields.notes import Note, Notes
 from decorators import input_error
-from tabulate import tabulate
-from utils.suggest_input import suggest_name_input
+from utils import suggest_name_input, render_table, color_input
 
 init(autoreset=True)
-
-
-@input_error
-def parse_input(user_input: str) -> tuple:
-    """Parse user input into command and arguments."""
-    cmd, *args = user_input.split()
-    cmd = cmd.strip().lower()
-    return cmd, *args
-
 
 @input_error
 def show_phone(args: list, book: AddressBook) -> str:
@@ -49,17 +40,7 @@ def show_all_contacts(book: AddressBook) -> str:
     """Show all contacts in a formatted table."""
     if not book:
         return "Contacts are empty."
-
-    table = []
-    for record in book.data.values():
-        phones = "; ".join(phone.value for phone in record.phones)
-        email = record.email.value if record.email else "N/A"
-        address = record.address.value if record.address else "N/A"
-        birthday = record.birthday.date.strftime("%d.%m.%Y") if record.birthday else "N/A"
-
-        table.append([record.name.value, phones, email, address, birthday])
-
-    return tabulate(table, headers=["Name", "Phone", "Email", "Address", "Birthday"], tablefmt="grid")
+    return render_table(list(book.data.values()))
 
 
 @input_error
@@ -80,10 +61,33 @@ def show_birthday(args, book: AddressBook):
 def birthdays(args, book: AddressBook):
     return book.get_upcoming_birthdays()
 
+@input_error
+def add_tags(book: AddressBook):
+    name, *_ = suggest_name_input("Enter contact name: ", book).split()
+    record = book.find(name)
+    if record is None:
+        return f"The record with name '{name}' is not found."
+    tags = color_input("Enter tags: ").split()
+    record.add_tags(tags)
+    return "Tags added."
+
 
 @input_error
-def add_note(notes: Notes, title: str) -> str:
+def remove_tags(book: AddressBook):
+    name, *_ = suggest_name_input("Enter contact name: ", book).split()
+    record = book.find(name)
+    if record is None:
+        return f"The record with name '{name}' is not found."
+    tags = color_input("Enter tags: ").split()
+    record.add_tags(tags)
+    record.remove_tags(tags)
+    return "Tags removed."
+
+
+@input_error
+def add_note(notes: Notes) -> str:
     """Add a new note to notes."""
+    title = input("Enter a title: ")
     if notes.find_note(title):
         return f"Note with title '{title}' already exists."
 
@@ -96,21 +100,33 @@ def add_note(notes: Notes, title: str) -> str:
 
 
 @input_error
-def change_note(notes: Notes, title: str) -> str:
+def change_note(notes: Notes) -> str:
     """Change the existing note by its title."""
-    if not (note := notes.find_note(title)):
+    title = input("Enter a title: ")
+    entity = notes.find_note(title)
+    if not entity:
         return f"Note with title: '{title}' is not found."
 
-    new_content = input("Enter new content: ")
-    if new_content:
-        note.content = new_content
+    choice = inquirer.select(
+        message="Which field would you like to edit?",
+        choices=["Content", "Tags", "Cancel"]
+    ).execute()
 
-    return f"Note with title '{title}' successfully edited."
+    if choice == "Cancel":
+        return "Operation cancelled."
+    elif choice == "Content":
+        value = color_input("Enter new content: ")
+        entity.add_content(value)
+        return f"Content edited successfully."
+    elif choice == "Tags":
+        return edit_tag(entity)
 
 
 @input_error
-def delete_note(notes: Notes, title: str) -> str:
+def delete_note(notes: Notes) -> str:
     """Delete the existing note by its title."""
+    title = input("Enter a title: ")
+
     if not notes.find_note(title):
         return f"Note with title: '{title}' is not found."
 
@@ -160,44 +176,19 @@ def load_data(filename: str = "var/addressbook.pkl") -> (AddressBook, Notes):
 
 
 @input_error
-def search_contacts(query: str, book: AddressBook) -> str:
+def search_contacts(book: AddressBook) -> str:
     """Search for contacts by any field."""
-    results = []
-    query_lower = query.lower()
+    query = color_input("Enter search query: ")
+    tag = color_input("Enter tag (optional): ")
 
-    for record in book.data.values():
-        found = False
+    order = inquirer.select(
+        message="Order: ",
+        choices=["asc", "desc"],
+    ).execute()
 
-        # Check name
-        if query_lower in str(record.name).lower():
-            results.append(str(record))
-            found = True
-
-        # Check phones
-        if not found:
-            for phone in record.phones:
-                if query_lower in phone.value:
-                    results.append(str(record))
-                    found = True
-                    break
-
-        # Check email
-        if not found and record.email and query_lower in str(record.email.value):
-            results.append(str(record))
-            found = True
-
-        # Check address
-        if not found and record.address and query_lower in str(record.address.value):
-            results.append(str(record))
-            found = True
-
-        # Check birthday
-        if not found and record.birthday and query_lower in str(record.birthday.value):
-            results.append(str(record))
-            found = True
-
+    results: list[Record] = book.search_records(query, tag, order=order)
     if results:
-        return "\n".join(results)
+        return render_table(results)
     return "No matching contacts found."
 
 
@@ -240,6 +231,15 @@ def add_contact_interactive(book: AddressBook) -> str:
             break
         print(Fore.LIGHTRED_EX + "Invalid birthday. Please enter in format DD.MM.YYYY")
 
+    # Input tags
+    while True:
+        tags = input(Fore.LIGHTYELLOW_EX + "Tags: " + Fore.RESET).split()
+        if not tags or validate_tags(tags):
+            break
+        print(Fore.LIGHTRED_EX + f"Invalid tags. The tag should be between 3 and 10 characters long.")
+        
+
+
     # Create a new record
     record = book.find(name)
     message = Fore.LIGHTGREEN_EX + "Contact updated." + Fore.RESET
@@ -252,8 +252,30 @@ def add_contact_interactive(book: AddressBook) -> str:
     email and record.add_email(email)
     address and record.add_address(address)
     birthday and record.add_birthday(birthday)
+    tags and record.add_tags(tags)
 
     return message
+
+def edit_tag(record: BaseEntity):
+        choiced = inquirer.select(
+            message="Which tag would you like to edit/remove?",
+            choices=['New'] + record.tags + ['Back']
+        ).execute()
+        if choiced == "Back":
+            return "Operation cancelled."
+        elif choiced == "New":
+            value = color_input("Enter name to add: ")
+            record.add_tags([value])
+            return f"Tag '{value}' added successfully."
+        else:
+            selected_tag = choiced
+            input_value = color_input("Enter new name or 'r' to remove: ")
+            record.remove_tags([selected_tag.value])
+            if input_value == "r":
+                return f"Tag '{selected_tag}' removed successfully."
+            else:
+                record.add_tags([input_value])
+                return f"Tag '{selected_tag}' renamed into '{input_value}' successfully."
 
 
 def edit_contact(book: AddressBook) -> str:
@@ -271,7 +293,7 @@ def edit_contact(book: AddressBook) -> str:
     # Choose the field to edit
     field_to_edit = inquirer.select(
         message="Which field would you like to edit?",
-        choices=["Phones", "Email", "Address", "Birthday", "Cancel"]
+        choices=["Phones", "Email", "Address", "Birthday", "Tags", "Cancel"]
     ).execute()
 
     if field_to_edit == "Cancel":
@@ -283,9 +305,6 @@ def edit_contact(book: AddressBook) -> str:
             message="Which phone would you like to edit/remove?",
             choices=['New'] + record.phones + ['Back']
         ).execute()
-
-        if field_to_edit == "Back":
-            return "Edit operation cancelled."
 
         if phone_to_remove_edit == "New":
             new_phone = input(Fore.LIGHTCYAN_EX + "Enter phone number to add: " + Fore.RESET)
@@ -321,6 +340,9 @@ def edit_contact(book: AddressBook) -> str:
         new_birthday = input(Fore.LIGHTCYAN_EX + "Enter the new birthday (YYYY-MM-DD): " + Fore.RESET)
         record.add_birthday(new_birthday)
         return record.get_info_with_title("Birthday updated successfully.")
+    
+    elif field_to_edit == "Tags":
+        return edit_tag(record)
 
 
 def main() -> None:
@@ -368,17 +390,13 @@ def main() -> None:
             args = input("Enter number of days to check: ").split()
             print(birthdays(args, contacts))
         elif choice == "Search contacts":
-            query = input("Enter search query: ")
-            print(search_contacts(query, contacts))
+            print(search_contacts(contacts))
         elif choice == "Add note":
-            title = input("Enter a title: ")
-            print(add_note(notes, title))
+            print(add_note(notes))
         elif choice == "Change note":
-            title = input("Enter a title: ")
-            print(change_note(notes, title))
+            print(change_note(notes))
         elif choice == "Delete note":
-            title = input("Enter a title: ")
-            print(delete_note(notes, title))
+            print(delete_note(notes))
         elif choice == "Find note":
             title = input("Enter the title to search for: ")
             print(find_note(notes, title))

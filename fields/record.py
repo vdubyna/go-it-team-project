@@ -1,11 +1,15 @@
+from typing import Optional
+
+from .base_entity import BaseEntity
 from .phone import Phone
 from .name import Name
 from .birthday import Birthday
+from .tag import Tag
 from .email import Email
 from .address import Address
 
 
-class Record:
+class Record(BaseEntity):
     """A class for a contact record that contains a name and a list of phone numbers."""
 
     def __init__(self, name: str) -> None:
@@ -13,10 +17,15 @@ class Record:
         self.phones: list[Phone] = []
         self.address: Address | None = None
         self.email: Email | None = None
-        self.birthday: str | None = None
+        self.tags: list[Tag] = []
+        self.birthday: Birthday | None = None
+        super().__init__()
+
 
     def __str__(self) -> str:
-        return f"Contact name: {self.name.value} || phones: {'; '.join(p.value for p in self.phones)} || birthday: {self.birthday} || email: {self.email} || address: {self.address}"
+        phones_str = "; ".join(phone.value for phone in self.phones)
+        tags_str = "; ".join(t.value for t in getattr(self, "tags", [])) or None
+        return f"Contact name: {self.name.value} || phones: {phones_str} || birthday: {self.birthday} || tags: {tags_str} || email: {self.email} || address: {self.address}"
 
     def add_birthday(self, birthday):
         """Add a birthday to the record."""

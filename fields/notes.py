@@ -1,3 +1,5 @@
+from typing import List
+from .base_collection import BaseCollection
 from .base_entity import BaseEntity
 from .base_field import Field
 
@@ -40,7 +42,7 @@ class Note(BaseEntity):
         self.content = Content(value)
 
 
-class Notes:
+class Notes(BaseCollection[Note]):
     def __init__(self) -> None:
         self.notes: list = []
 
@@ -65,9 +67,21 @@ class Notes:
         self.notes.remove(note)
         return f"Note with title: '{title}' deleted."
 
-    def show_all(self) -> str:
-        if not self.notes:
-            return "No notes available."
-
+    def get_all(self) -> List[Note]:
+        return self.notes
+    
+    def _match_entity(self, record: Note, query: str, tag: str = "") -> Note | None:
+        """Check if the record matches the query."""
+        if tag and not record.includes_tag(tag):
+            return None
+        if query:
+            if query in record.title.value.lower():
+                return record
+            if record.content and query in record.content.value.lower():
+                return record
+            return None
+        return record
+    
+    def render_table(self, notes: list[Note]) -> str:
         divider = "-" * 40
-        return "\n\n".join(f"{divider}\n{note}\n{divider}" for note in self.notes)
+        return "\n\n".join(f"{divider}\n{note}\n{divider}" for note in notes)

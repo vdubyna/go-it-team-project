@@ -7,7 +7,7 @@ from colorama import init, Fore
 from fields.validators import validate_name, validate_phone, validate_email, validate_address, validate_birthday, validate_tags
 from fields.notes import Note, Notes
 from decorators import input_error
-from utils import suggest_name_input, render_table, color_input
+from utils import suggest_name_input, color_input
 
 init(autoreset=True)
 
@@ -40,7 +40,7 @@ def show_all_contacts(book: AddressBook) -> str:
     """Show all contacts in a formatted table."""
     if not book:
         return "Contacts are empty."
-    return render_table(list(book.data.values()))
+    return book.render_table(list(book.data.values()))
 
 
 @input_error
@@ -146,14 +146,25 @@ def find_note(notes: Notes, title: str) -> str | Note:
 @input_error
 def show_all_notes(notes: Notes) -> str:
     """Show all existing notes."""
-    if not notes.notes:
-        return tabulate([["No notes available."]], tablefmt="grid")
+    records = notes.get_all()
+    if not records:
+        return "No notes available."
+    return notes.render_table(records)
 
-    table = []
-    for note in notes.notes:
-        table.append([note.title.value, note.content.value])
+@input_error
+def search_notes(notes: Notes) -> str:
+    query = color_input("Enter search query: ")
+    tag = color_input("Enter tag (optional): ")
 
-    return tabulate(table, headers=["Title", "Content"], tablefmt="grid")
+    order = inquirer.select(
+        message="Order: ",
+        choices=["asc", "desc"],
+    ).execute()
+
+    results: list[Note] = notes.search(query, tag, "title", order)
+    if results:
+        return notes.render_table(results)
+    return "No matching contacts found."
 
 
 def save_data(book: AddressBook, notes: Notes, filename: str = "var/addressbook.pkl") -> None:
@@ -186,9 +197,9 @@ def search_contacts(book: AddressBook) -> str:
         choices=["asc", "desc"],
     ).execute()
 
-    results: list[Record] = book.search_records(query, tag, order=order)
+    results: list[Record] = book.search(query, tag, "name", order)
     if results:
-        return render_table(results)
+        return book.render_table(results)
     return "No matching contacts found."
 
 
@@ -245,7 +256,7 @@ def add_contact_interactive(book: AddressBook) -> str:
     message = Fore.LIGHTGREEN_EX + "Contact updated." + Fore.RESET
     if record is None:
         record = Record(name)
-        book.add_record(record)
+        book.add(record)
         message = Fore.LIGHTGREEN_EX + "Contact added." + Fore.RESET
 
     record.add_phone(phone)
@@ -280,7 +291,6 @@ def edit_tag(record: BaseEntity):
 
 def edit_contact(book: AddressBook) -> str:
     """Edit an existing contact by updating its fields."""
-
     name = suggest_name_input(
         "Enter the name of the contact you want to edit: ", book=book
     )
@@ -366,6 +376,7 @@ def main() -> None:
                 "Delete note",
                 "Find note",
                 "Show all notes",
+                "Search notes",
                 "Exit",
             ],
         ).execute()
@@ -402,6 +413,8 @@ def main() -> None:
             print(find_note(notes, title))
         elif choice == "Show all notes":
             print(show_all_notes(notes))
+        elif choice == "Search notes":
+            print(search_notes(notes))
         print()
 
 

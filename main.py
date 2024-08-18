@@ -280,6 +280,7 @@ def edit_tag(record: BaseEntity):
                 return f"Tag '{selected_tag}' renamed into '{input_value}' successfully."
 
 
+@input_error
 def edit_contact(book: AddressBook) -> str:
     """Edit an existing contact by updating its fields."""
     name = suggest_name_input(
